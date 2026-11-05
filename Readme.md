@@ -156,16 +156,6 @@ Open any of the markdown files in `docs/` using any Markdown viewer or IDE (VS C
 
 ---
 
-## 👥 Authors & Acknowledgments
-
-* **Student Name:** Rashi Agarwal
-* **Roll No:** `2400290130078`
-* **Class / Section:** 2026_B
-* **Instructor / Evaluator:** Gaurav Kumar (`Gauravkumar512`)
-* **Department:** Department of Computer Science & Engineering
-
----
-
 <p align="center">
   <i>⚡ Developed with excellence for the CS311L Software Engineering Lab Assessment.</i>
 </p>
