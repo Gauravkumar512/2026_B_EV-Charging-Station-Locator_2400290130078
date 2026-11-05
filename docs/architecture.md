@@ -1,199 +1,213 @@
 # 🏗️ System Architecture — EV Charging Station Locator
 
-> This document outlines the high-level architecture of the EV Charging Station Locator application. It will evolve as the project matures.
+> Complete High-Level and Component-Level Architecture Blueprint for the EV Charging Station Locator Platform.
+
+---
+
+## 📋 Architecture Index & Document Map
+This system architecture document is part of the comprehensive Software Engineering Lab suite for **CS311L – Software Engineering and Design Principles**:
+
+| Lab Session | Deliverable Document | Focus Area |
+| :--- | :--- | :--- |
+| **Session 1** | [Experiment 1: Tools & Version Control](exp1.md) | Collaborative Development, Git/GitHub, Agile SDLC |
+| **Session 2** | [Experiment 2: Problem Identification & Feasibility](exp2.md) | Problem Statement, Scope & Feasibility Analysis |
+| **Session 3** | [Experiment 3: Requirements Elicitation](exp3.md) | Interviews, Questionnaires, Personas, User Stories |
+| **Session 4** | [Experiment 4: IEEE SRS Documentation](exp4.md) | Formal Software Requirement Specification |
+| **Session 5** | [Experiment 5: UML Use Case Modeling](exp5.md) | Use Case Diagrams & Operational Narratives |
+| **Session 6** | [Experiment 6: UML Class Diagram Design](exp6.md) | Object-Oriented Analysis, Classes & Invariants |
+| **Session 7** | [Experiment 7: Dynamic Behavioral Modeling](exp7.md) | Sequence & Activity Workflow Diagrams |
+| **Session 8** | [Experiment 8: Software Design Principles](exp8.md) | Modularization, Coupling & Cohesion Analysis |
+| **Session 9** | [Experiment 9: Architecture & Design Patterns](exp9.md) | Layered, Microservices & GoF Design Patterns |
 
 ---
 
 ## 📐 Architecture Overview
 
-The application follows a **three-tier architecture**:
+The application follows a **multi-tier cloud-native architecture**:
 
-1. **Presentation Layer (Frontend)** — The user-facing interface with an interactive map and search functionality.
-2. **Application Layer (Backend)** — REST API server that handles business logic, authentication, and data processing.
-3. **Data Layer (Database)** — Persistent storage for station data, user accounts, reviews, and session information.
+1. **Presentation Layer (Client SPA / PWA)** — Responsive React/TypeScript interface featuring Mapbox GL interactive vector rendering, search filters, and booking sheets.
+2. **Gateway & Security Layer** — Reverse proxy, SSL termination, JWT authentication, and API rate limiting.
+3. **Application Layer (Business Logic Services)** — Node.js / Express and Python services managing geospatial queries, distributed 15-minute slot locks, and payment settlements.
+4. **Data Persistence & Cache Layer** — PostgreSQL 15 with PostGIS spatial extension for sub-second location bounding box queries, Redis 7 for distributed locks and pub-sub caching, and MQTT for hardware telemetry.
 
 ---
 
-## 🔗 High-Level System Diagram
+## 🔗 High-Level System Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph Client["🖥️ Presentation Layer"]
-        UI["Web App (Browser)"]
-        MAP["Map Component"]
-        AUTH_UI["Auth Pages"]
+    subgraph Client["🖥️ Presentation Layer (Client Tier)"]
+        UI["Web App / Mobile PWA (React)"]
+        MAP["Mapbox GL Vector Canvas"]
+        AUTH_UI["Auth & Vehicle Profile Views"]
+        BOOK_UI["Slot Booking & Dynamic QR Pass"]
     end
 
-    subgraph Server["⚙️ Application Layer"]
-        API["REST API Server"]
-        AUTH["Auth Service"]
-        GEO["Geolocation Service"]
-        STATION["Station Service"]
+    subgraph Gateway["🚪 Gateway & Edge Tier"]
+        PROXY["Nginx Reverse Proxy & Load Balancer"]
+        WAF["Rate Limiting & CORS Filter"]
+        JWT["JWT Security Filter"]
     end
 
-    subgraph Data["🗄️ Data Layer"]
-        DB["Database"]
-        CACHE["Cache (Optional)"]
+    subgraph Server["⚙️ Application Layer (Service Tier)"]
+        AUTH["Auth & Identity Service"]
+        GEO["Geospatial & Station Service"]
+        BOOK["Booking & Lock Service"]
+        PAY["Payment Adapter Service"]
+        TELEM["OCPP Telemetry Ingestion"]
     end
 
-    subgraph External["🌐 External Services"]
-        MAPS_API["Maps / Geocoding API"]
-        CHARGER_API["Charger Network API (Future)"]
+    subgraph Data["🗄️ Persistence Layer (Data Tier)"]
+        DB[("PostgreSQL 15 + PostGIS<br/>(Spatial R-Tree Index)")]
+        REDIS[("Redis 7 In-Memory Cache<br/>& Distributed Locks")]
+        MQ[("MQTT / AMQP Message Broker")]
     end
 
-    UI --> API
-    MAP --> API
-    AUTH_UI --> AUTH
-    API --> AUTH
-    API --> GEO
-    API --> STATION
+    subgraph External["🌐 External Cloud Services"]
+        MAPS_API["Mapbox / Google Maps Geocoding API"]
+        PAY_API["Razorpay / Stripe Payment Gateway"]
+        SMS_API["Twilio / SendGrid Notifications"]
+        IOT_KIOSK["Physical EV Charging Kiosks (OCPP)"]
+    end
+
+    Client -->|HTTPS REST & WSS| PROXY
+    PROXY --> WAF --> JWT
+    JWT --> AUTH
+    JWT --> GEO
+    JWT --> BOOK
+    JWT --> PAY
+    
+    GEO --> DB
+    GEO --> REDIS
     GEO --> MAPS_API
-    STATION --> DB
-    AUTH --> DB
-    STATION --> CACHE
-    STATION --> CHARGER_API
+    
+    BOOK --> DB
+    BOOK --> REDIS
+    BOOK --> SMS_API
+    
+    PAY --> PAY_API
+    PAY --> DB
+    
+    IOT_KIOSK --> MQ
+    MQ --> TELEM
+    TELEM --> DB
+    TELEM --> REDIS
+    REDIS -.->|WebSocket Broadcast| Client
 ```
 
 ---
 
-## 📦 Component Breakdown
+## 📦 Component Breakdown & Service Boundaries
 
-### 1. Frontend (Presentation Layer)
+### 1. Presentation Layer (Frontend)
 
-| Component         | Responsibility                                      |
-| ----------------- | --------------------------------------------------- |
-| Map View          | Renders interactive map with station markers         |
-| Search & Filters  | Lets users filter stations by type, distance, etc.   |
-| Station Detail    | Shows station info, availability, reviews            |
-| Auth Pages        | Login, signup, and profile management                |
-| Navigation        | Provides directions from user's location to station  |
+| Component | Technology | Responsibility |
+| :--- | :--- | :--- |
+| **Interactive Map View** | Mapbox GL JS / Leaflet | Renders GPU-accelerated vector map, station clusters, and custom status pins |
+| **Filter & Search Drawer** | React, Tailwind CSS | Multi-criteria filtering by connector type (CCS2, Type 2), power (kW), and pricing |
+| **Booking & Checkout Modal** | React, Stripe/Razorpay SDK | Manages 15-minute countdown reservation hold and payment authorization |
+| **QR Pass Generator** | QR Canvas / Web Crypto | Generates offline-verifiable, dynamic cryptographically signed QR code pass |
+| **Operator Console** | React Dashboard | Port health toggle, tariff configuration, and real-time revenue analytics |
 
-### 2. Backend (Application Layer)
+### 2. Application Layer (Backend Microservices / Modules)
 
-| Component           | Responsibility                                         |
-| ------------------- | ------------------------------------------------------ |
-| REST API Server     | Exposes endpoints for frontend consumption              |
-| Auth Service        | Handles user registration, login, token management      |
-| Station Service     | CRUD operations for charging stations                   |
-| Geolocation Service | Resolves coordinates, calculates distances              |
-| Search Service      | Handles filtering, sorting, and proximity queries       |
+| Service Module | Endpoints | Responsibility |
+| :--- | :--- | :--- |
+| **Auth & Profile Service** | `/api/v1/auth/*` | User registration, bcrypt/Argon2 password hashing, JWT token rotation |
+| **Station & Geo Service** | `/api/v1/stations/*` | PostGIS spatial queries (`ST_DWithin`), connector filtering, rating aggregates |
+| **Booking & Lock Service** | `/api/v1/bookings/*` | Redis-backed distributed slot reservation, concurrency conflict resolution |
+| **Payment Service** | `/api/v1/payments/*` | Checkout intent creation, webhook signature verification, digital invoices |
+| **Telemetry Ingestion Worker** | MQTT subscriber | Ingests live charger telemetry (voltage, current, socket status) via OCPP |
 
-### 3. Database (Data Layer)
+### 3. Data Persistence Layer
 
-| Entity              | Key Fields                                              |
-| ------------------- | ------------------------------------------------------- |
-| Users               | id, name, email, password_hash, created_at              |
-| Stations            | id, name, lat, lng, address, charger_type, status       |
-| Reviews             | id, user_id, station_id, rating, comment, created_at    |
-| Favourites          | id, user_id, station_id                                 |
-
-> Schema design will be finalized and documented separately.
+| Datastore | Engine | Primary Usage & Storage Schema |
+| :--- | :--- | :--- |
+| **Relational & Spatial DB** | PostgreSQL 15 + PostGIS | Station geospatial coordinates, user accounts, vehicle profiles, immutable payment ledgers |
+| **In-Memory Cache & Lock** | Redis 7 | 15-minute slot reservation locks (`SET NX PX`), hot station query cache, WebSocket pub-sub |
+| **IoT Message Broker** | Eclipse Mosquitto / RabbitMQ | Ingestion queue for high-frequency OCPP hardware status telemetry |
 
 ---
 
-## 🔄 Data Flow
+## 🔄 End-to-End Dynamic Interaction Flows
 
-### User Searches for Nearby Stations
-
+### A. Geospatial Discovery Sequence
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant API as Backend API
-    participant DB as Database
-    participant Maps as Maps API
+    actor Driver as 👤 EV Driver
+    participant UI as 🖥️ Client App
+    participant API as ⚙️ Station Service
+    participant Cache as ⚡ Redis Cache
+    participant DB as 🗄️ PostgreSQL (PostGIS)
 
-    User->>Frontend: Opens app / Grants location
-    Frontend->>Frontend: Gets user coordinates (browser Geolocation API)
-    Frontend->>API: GET /stations?lat=xx&lng=yy&radius=5km
-    API->>DB: Query stations within radius
-    DB-->>API: Return matching stations
-    API-->>Frontend: JSON response with station list
-    Frontend->>Maps: Render markers on map
-    Maps-->>User: Interactive map with stations displayed
+    Driver->>UI: Enables location & requests nearby chargers
+    UI->>API: GET /stations/nearby?lat=xx&lng=yy&radius=5km&connector=CCS2
+    API->>Cache: Check cached spatial query hash
+    alt Cache Hit
+        Cache-->>API: Return cached station summaries
+    else Cache Miss
+        API->>DB: Query ST_DWithin(geom, ST_MakePoint(lng,lat), 5000)
+        DB-->>API: Return stations with live port counts
+        API->>Cache: Cache results with 60-second TTL
+    end
+    API-->>UI: Deliver station pins with color-coded availability
+    UI-->>Driver: Render interactive map with clickable markers
 ```
 
-### User Views Station Details
-
+### B. Slot Reservation & Atomic Settlement Sequence
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Frontend
-    participant API as Backend API
-    participant DB as Database
+    actor Driver as 👤 EV Driver
+    participant UI as 🖥️ Client App
+    participant BookSvc as ⚙️ Booking Service
+    participant Redis as 🔒 Redis Redlock
+    participant PayGW as 💳 Payment Gateway
+    participant DB as 🗄️ Database
 
-    User->>Frontend: Clicks on a station marker
-    Frontend->>API: GET /stations/:id
-    API->>DB: Fetch station details + reviews
-    DB-->>API: Station data
-    API-->>Frontend: JSON with details, reviews, availability
-    Frontend-->>User: Station detail panel displayed
+    Driver->>UI: Selects Station Port -> Clicks "Reserve (15 Mins)"
+    UI->>BookSvc: POST /bookings/reserve {slotId, vehicleId}
+    BookSvc->>Redis: Acquire distributed slot lock (TTL: 900s)
+    alt Lock Failed (Port already locked)
+        Redis-->>BookSvc: Lock collision
+        BookSvc-->>UI: 409 Conflict ("Slot reserved by another user")
+    else Lock Succeeded
+        Redis-->>BookSvc: Lock OK
+        BookSvc->>DB: Record reservation (status='PENDING')
+        BookSvc->>PayGW: Create payment order (₹50 deposit)
+        PayGW-->>BookSvc: Order details & payment token
+        BookSvc-->>UI: 201 Created (Order token + 15m timer)
+        UI->>PayGW: Driver completes checkout
+        PayGW->>BookSvc: Webhook: payment.successful
+        BookSvc->>DB: Update reservation (status='CONFIRMED')
+        BookSvc-->>UI: Deliver encrypted QR entry pass
+    end
 ```
 
 ---
 
-## 📂 Folder Mapping
+## 🧩 Architectural Design Patterns Applied
 
-```
-src/
-├── frontend/           # Presentation Layer
-│   ├── components/     # Reusable UI components
-│   ├── pages/          # Page-level views
-│   ├── services/       # API call utilities
-│   └── assets/         # Static assets (images, icons)
-│
-├── backend/            # Application Layer
-│   ├── routes/         # API route definitions
-│   ├── controllers/    # Request handlers / business logic
-│   ├── models/         # Database models / schemas
-│   ├── middleware/      # Auth, validation, error handling
-│   └── config/         # Environment & DB configuration
-```
+| Pattern | Category | Context & Project Implementation |
+| :--- | :--- | :--- |
+| **Singleton Pattern** | Creational | Shared connection pooling for PostgreSQL and Redis clients to eliminate socket overhead |
+| **Factory Method Pattern** | Creational | `PaymentGatewayFactory` instantiating regional payment adapters (`StripeAdapter`, `RazorpayAdapter`) |
+| **Adapter Pattern** | Structural | Standardized `IMapProvider` abstracting Mapbox, Google Maps, and OpenStreetMap implementations |
+| **Facade Pattern** | Structural | `BookingFacade` orchestrating slot validation, payment hold, and notification delivery |
+| **Observer Pattern** | Behavioral | Real-time WebSocket pub-sub pushing station availability mutations to client maps |
+| **Strategy Pattern** | Behavioral | Dynamic tariff algorithm calculating peak/off-peak rates and commercial fleet subsidies |
 
 ---
 
-## 🔐 Authentication Flow (Planned)
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant API as Auth Service
-    participant DB as Database
-
-    User->>Frontend: Enters credentials
-    Frontend->>API: POST /auth/login
-    API->>DB: Validate credentials
-    DB-->>API: User record
-    API-->>Frontend: JWT Access Token
-    Frontend->>Frontend: Store token (localStorage / cookie)
-    Frontend->>API: Subsequent requests with Authorization header
-    API->>API: Verify JWT
-    API-->>Frontend: Protected resource response
-```
+## 🔐 Security & Non-Functional Architecture Safeguards
+* **Zero Trust Transport:** Mandatory TLS 1.3 encryption across all public interfaces with strict HSTS policies.
+* **Stateless Authorization:** Cryptographically signed JWT access tokens with short TTLs (15 mins) and HTTP-only refresh cookies.
+* **PCI-DSS Level 1 Compliance:** Direct browser-to-gateway tokenization; zero raw credit card or banking secrets stored on platform servers.
+* **High-Availability Fallbacks:** Redis cache fallback to read-replica database in the event of primary database failover.
 
 ---
 
-## 🧩 Key Design Decisions
-
-| Decision                     | Rationale                                                    |
-| ---------------------------- | ------------------------------------------------------------ |
-| REST API over GraphQL        | Simpler to implement for the current scope                   |
-| JWT-based Authentication     | Stateless auth suitable for SPAs                             |
-| Separate Service Modules     | Clean separation of concerns, easier testing                 |
-| Proximity-based Queries      | Core UX requirement — users need "nearby" results            |
-| Optional Caching Layer       | Can improve performance for frequently accessed station data |
-
----
-
-## 🚧 Future Considerations
-
-- **WebSocket support** for real-time availability updates
-- **Rate limiting & API throttling** for production security
-- **CDN** for static frontend assets
-- **Containerization (Docker)** for consistent deployment
-- **CI/CD pipeline** for automated testing and deployments
-
----
-
-> 📝 *This document is a living reference and will be updated as the project progresses through design, development, and deployment phases.*
+## 👥 Student & Course Identification
+* **Course Code:** CS311L – Software Engineering and Design Principles
+* **Project Name:** EV Charging Station Locator
+* **Lead Author:** Rashi Agarwal (Roll Number: `2400290130078`)
+* **Repository Identifier:** `2026_B_EV-Charging-Station-Locator_2400290130078`
