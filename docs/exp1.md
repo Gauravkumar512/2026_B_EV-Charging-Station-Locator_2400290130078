@@ -64,11 +64,11 @@ flowchart LR
 
 ### Team Formation and Role Allocation
 
-| Member Name | Student ID / Roll No. | Assigned Role | Primary Responsibilities |
-| :--- | :--- | :--- | :--- |
-| **Rashi Agarwal** | **2400290130078** | **Project Lead & Software Architect** | Repository administration, architecture design, SRS documentation, UML modeling, backend APIs, and code reviews |
-| **Collaborator / Peer** | *Course Cohort* | **Frontend & UI/UX Developer** | Responsive interface design, map integration (Mapbox/Leaflet), accessibility, client-side validation |
-| **Collaborator / Peer** | *Course Cohort* | **QA & Test Engineer** | Test case design, unit testing, integration testing, CI/CD validation, and defect tracking |
+| Assigned Role | Primary Responsibilities |
+| :--- | :--- |
+| **Project Lead & Software Architect** | Repository administration, architecture design, SRS documentation, UML modeling, backend APIs, and code reviews |
+| **Frontend & UI/UX Developer** | Responsive interface design, map integration (Mapbox/Leaflet), accessibility, client-side validation |
+| **QA & Test Engineer** | Test case design, unit testing, integration testing, CI/CD validation, and defect tracking |
 
 ---
 
@@ -78,7 +78,7 @@ flowchart LR
 The project repository is structured according to industry best practices, separating documentation, source code, and automated tests:
 
 ```
-2026_B_EV-Charging-Station-Locator_2400290130078/
+EV-Charging-Station-Locator/
 ├── .github/
 │   └── workflows/              # CI/CD pipelines and PR validation
 ├── docs/                       # Formal software engineering documentation
@@ -151,4 +151,4 @@ Establishing structured version control practices and selecting an Agile framewo
 ---
 
 ### Result
-The GitHub repository for the EV Charging Station Locator (`2026_B_EV-Charging-Station-Locator_2400290130078`) was successfully configured with appropriate directory structures, version control conventions, role allocations, and Agile SDLC definitions.
+The GitHub repository for the EV Charging Station Locator (`EV-Charging-Station-Locator`) was successfully configured with appropriate directory structures, version control conventions, role allocations, and Agile SDLC definitions.

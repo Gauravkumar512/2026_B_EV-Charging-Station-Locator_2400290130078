@@ -23,7 +23,6 @@ To author a formal, complete, unambiguous Software Requirement Specification (SR
 # SOFTWARE REQUIREMENT SPECIFICATION (SRS)
 ## Project: EV Charging Station Locator (SmartCharge Locator)
 **Version:** 1.0  
-**Prepared by:** Rashi Agarwal (Roll No: 2400290130078)  
 **Course:** CS311L – Software Engineering and Design Principles  
 
 ---

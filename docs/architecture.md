@@ -209,5 +209,4 @@ sequenceDiagram
 ## 👥 Student & Course Identification
 * **Course Code:** CS311L – Software Engineering and Design Principles
 * **Project Name:** EV Charging Station Locator
-* **Lead Author:** Rashi Agarwal (Roll Number: `2400290130078`)
-* **Repository Identifier:** `2026_B_EV-Charging-Station-Locator_2400290130078`
+* **Repository Identifier:** `EV-Charging-Station-Locator`

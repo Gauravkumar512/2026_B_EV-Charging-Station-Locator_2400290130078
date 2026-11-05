@@ -95,7 +95,7 @@ graph TB
 ## 📁 Repository Directory Structure
 
 ```
-2026_B_EV-Charging-Station-Locator_2400290130078/
+EV-Charging-Station-Locator/
 ├── .github/
 │   └── workflows/              # CI/CD automation & PR checks
 ├── docs/                       # Formal Software Engineering Lab Documentation
@@ -136,22 +136,7 @@ graph TB
 
 ## ⚙️ Quick Start & Setup Guide
 
-### 1. Clone the Fork Repository
-```bash
-git clone https://github.com/rashiagrwal12/2026_B_EV-Charging-Station-Locator_2400290130078.git
-cd 2026_B_EV-Charging-Station-Locator_2400290130078
-```
-
-### 2. Configure Upstream Remote
-```bash
-# Add upstream parent repository for synchronization
-git remote add upstream https://github.com/Gauravkumar512/2026_B_EV-Charging-Station-Locator_2400290130078.git
-
-# Verify remotes
-git remote -v
-```
-
-### 3. Review Documentation Artifacts
+### 1. Review Documentation Artifacts
 Open any of the markdown files in `docs/` using any Markdown viewer or IDE (VS Code, Antigravity IDE, GitHub Web) to view rendered Mermaid diagrams and complete lab reports.
 
 ---
