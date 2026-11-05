@@ -8,11 +8,6 @@
 
 * **Course Title:** Software Engineering and Design Principles
 * **Course Code:** CS311L
-* **Academic Batch:** 2026_B
-* **Student Name:** Rashi Agarwal
-* **Student Roll No / University ID:** `2400290130078`
-* **Fork Repository:** [rashiagrwal12/2026_B_EV-Charging-Station-Locator_2400290130078](https://github.com/rashiagrwal12/2026_B_EV-Charging-Station-Locator_2400290130078)
-* **Upstream Main Repository:** [Gauravkumar512/2026_B_EV-Charging-Station-Locator_2400290130078](https://github.com/Gauravkumar512/2026_B_EV-Charging-Station-Locator_2400290130078)
 
 ---
 
